@@ -2,15 +2,13 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const ensureLogin = require("connect-ensure-login");
-
 // Require user model
 const User = require("../models/User.model");
 // Add bcrypt to encrypt passwords
 const bcrypt = require("bcrypt");
 const bcryptSalt = 10;
 
-//sign up functionality iteration 1
-
+//sign up functionality
 router.get("/signup", (req, res) => {
   res.render("auth/signup");
 });
@@ -38,13 +36,7 @@ router.post("/signup", (req, res, next) => {
 
       User.create({ username: username, password: hashPass })
         .then((dbUser) => {
-          // login the user
-          // req.login(dbUser, (err) => {
-          //   if (err) next(err);
-          //   else res.redirect("/");
-          // });
           res.render("auth/login");
-          //res.redirect("auth/login");   //Why does res.render work and not res.redirect?
         })
         .catch((err) => {
           next(err);
@@ -53,36 +45,29 @@ router.post("/signup", (req, res, next) => {
   });
 });
 
-//login functionality iteration 2
-
-router.get("/login", (req, res) => {
-  res.render("auth/login");
+//login functionality
+router.get("/login", (req, res, next) => {
+  res.render("auth/login", { "message": req.flash("error") });
 });
 
-router.post(
-  "/login",
+router.post("/login",
   passport.authenticate("local", {
-    successRedirect: "/",
-    failureRedirect: "/auth/login",
+    successRedirect: "/private",
+    failureRedirect: "/login",
     failureFlash: true,
     passReqToCallback: true,
   })
 );
 
-const loginCheck = () => {
-  return (req, res, next) => {
-    if (req.isAuthenticated()) {
-      next();
-    } else {
-      res.redirect("/auth/login");
-    }
-  };
-};
-
-// Add passport, must go below other routes
-
+// Add passport for authentication. Must go below other routes.
 router.get("/private", ensureLogin.ensureLoggedIn(), (req, res) => {
-  res.render("passport/auth/private", { user: req.user });
+  res.render("private", { user: req.user });
+});
+
+//Logout
+router.get("/logout", (req, res) => {
+  req.logout();
+  res.redirect("/login");
 });
 
 module.exports = router;

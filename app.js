@@ -9,6 +9,7 @@ const mongoose = require("mongoose");
 const logger = require("morgan");
 const path = require("path");
 const User = require("./models/User.model");
+const flash = require("connect-flash");
 
 //require passport and express packages
 const session = require("express-session");
@@ -39,6 +40,7 @@ app.use(logger("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+//register flash
 
 // configure the express middleware, set the secret key
 
@@ -65,8 +67,11 @@ passport.deserializeUser((id, done) => {
     });
 });
 
+app.use(flash());
 passport.use(
-  new LocalStrategy((username, password, next) => {
+  new LocalStrategy({
+    passReqToCallback: true
+  }, (req, username, password, next) => {
     User.findOne({ username }, (err, user) => {
       if (err) {
         return next(err);
